@@ -4,15 +4,24 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "Ghulam Mustafa Bhatti <gmbhatti42@gmail.com>",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
-    "dotenv": "^17.2.3",
-    "express": "^5.1.0",
-    "mongoose": "^9.0.0"
+    "@langchain/community": "0.3.0",
+    "@langchain/core": "0.3.0",
+    "@langchain/ollama": "0.1.0",
+    "bullmq": "^5.65.1",
+    "dotenv": "16.4.5",
+    "express": "4.21.1",
+    "ioredis": "^5.8.2",
+    "langchain": "0.3.0",
+    "pg": "8.13.1",
+    "reflect-metadata": "0.2.2",
+    "typeorm": "0.3.20"
   }
 }
