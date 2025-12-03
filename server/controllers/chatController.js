@@ -33,20 +33,25 @@ const pgConfig = {
 };
 
 export const getChatResponse = async (req, res) => {
-  const { question } = req.body;
+  const { question, docId } = req.body;
   if (!question) {
     return res.status(400).json({ error: 'Question is required' });
   }
   try {
-    console.log('Thinking...');
-    const vectorStore = await PGVectorStore.initialize({
-      embeddings,
-      pgConfig,
-    });
+    console.log(`Thinking about: "${question}" in doc: ${docId || 'ALL'}`);
+    const vectorStore = await PGVectorStore.initialize(embeddings, pgConfig);
     if (!vectorStore) {
       throw new Error('Failed to initialize vector store');
     }
-    const retrievedDocs = await vectorStore.similaritySearch(question, 4);
+
+    // Filter: Only look at chunks where metadata.docId == docId
+    const filter = docId ? { docId: docId } : {};
+    const retrievedDocs = await vectorStore.similaritySearch(
+      question,
+      10,
+      filter
+    );
+
     console.log('Retrieved Docs: ', retrievedDocs);
     const context = retrievedDocs
       .map((doc) => doc.pageContent)

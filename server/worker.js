@@ -30,9 +30,7 @@ const pgConfig = {
 
 const pdfWorker = async (job) => {
   const { fileName, filePath } = job.data;
-  console.log(
-    `[Job ${job.id}] || Processing PDF: ${fileName}`
-  );
+  console.log(`[Job ${job.id}] || Processing PDF: ${fileName}`);
   try {
     const loader = new PDFLoader(filePath);
     const rawDocs = await loader.load();
@@ -43,7 +41,13 @@ const pdfWorker = async (job) => {
       chunkOverlap: 200,
     });
     const docs = await splitter.splitDocuments(rawDocs);
-    console.log(`[Job ${job.id}] || Split into ${docs.length} chunks.`);
+
+    // Tag every chunk with the filename so we can filter by it later
+    docs.forEach((doc) => {
+      doc.metadata.docId = fileName;
+    });
+
+    console.log(`[Job ${job.id}] ✂️  Split into ${docs.length} chunks.`);
 
     // Postgress vector store setup using langchain PGVectorStore
     await PGVectorStore.fromDocuments(docs, embeddings, pgConfig);

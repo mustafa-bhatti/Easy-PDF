@@ -1,6 +1,9 @@
+import express from 'express';
 import multer from 'multer';
 import fs from 'fs';
+import { uploadFile, getJobStatus } from '../controllers/uploadController.js';
 
+const router = express.Router();
 
 const uploadDir = 'uploads/';
 if (!fs.existsSync(uploadDir)) {
@@ -17,5 +20,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+router.post('/', upload.single('file'), uploadFile);
 
 export default upload;
