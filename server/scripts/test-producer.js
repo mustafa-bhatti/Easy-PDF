@@ -4,8 +4,8 @@ const testQueue = async () => {
   console.log('Triggering test job...');
 
   await pdfQueue.add('pdf-processing', {
-    filename: 'test-document.pdf',
-    path: '/tmp/test-document.pdf',
+    fileName: 'test-document.pdf',
+    filePath: './tmp/test-document.pdf',
   });
 
   console.log('Job added to queue!');

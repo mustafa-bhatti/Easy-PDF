@@ -1,10 +1,9 @@
-import { tryCatch, Worker } from 'bullmq';
+import { Worker } from 'bullmq';
 import { REDIS_CONFIG } from './config/redis.js';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { OllamaEmbeddings } from '@langchain/ollama';
-import { PGVectorStore } from 'langchain/community/vectorstores/pgvector';
-import pg from 'pg';
+import { PGVectorStore } from '@langchain/community/vectorstores/pgvector';
 import dotenv from 'dotenv';
 dotenv.config();
 const embeddings = new OllamaEmbeddings({
@@ -13,35 +12,48 @@ const embeddings = new OllamaEmbeddings({
 });
 const pgConfig = {
   postgresConnectionOptions: {
-    type: 'postgress',
-    host: process.env.PG_HOST,
-    port: process.env.PG_PORT,
-    user: process.env.PG_USER,
-    password: process.env.PG_PASSWORD,
-    database: process.env.PG_DATABASE,
+    type: 'postgres',
+    host: process.env.db_host,
+    port: process.env.db_port,
+    user: process.env.db_user,
+    password: process.env.db_password,
+    database: process.env.db_name,
   },
-    tableName: 'document_vectors',
-    columns:{
-        idColumnName: 'id',
-        vectorColumnName: 'embedding',
-        contentColumnName: 'content',
-        metadataColumnName: 'metadata',
-    }
+  tableName: 'document_vectors',
+  columns: {
+    idColumnName: 'id',
+    vectorColumnName: 'embedding',
+    contentColumnName: 'content',
+    metadataColumnName: 'metadata',
+  },
 };
 
 const pdfWorker = async (job) => {
-  const {filePath,filename} = job.data;
-  console.log(`[Job ${job.id}] || Processing PDF: ${filename}`);
+  const { fileName, filePath } = job.data;
+  console.log(
+    `[Job ${job.id}] || Processing PDF: ${fileName}`
+  );
   try {
     const loader = new PDFLoader(filePath);
     const rawDocs = await loader.load();
-    
-    const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 200 });
+
+    // splitting text here
+    const splitter = new RecursiveCharacterTextSplitter({
+      chunkSize: 1000,
+      chunkOverlap: 200,
+    });
     const docs = await splitter.splitDocuments(rawDocs);
     console.log(`[Job ${job.id}] || Split into ${docs.length} chunks.`);
-    
+
+    // Postgress vector store setup using langchain PGVectorStore
+    await PGVectorStore.fromDocuments(docs, embeddings, pgConfig);
+    console.log(
+      `[Job ${job.id}] || Stored ${docs.length} vectors in the database.`
+    );
+    return { status: 'completed', chunks: docs.length };
   } catch (error) {
     console.error(`[Job ${job.id}] || Error processing PDF: ${error.message}`);
+    return { status: 'failed', error: error.message };
   }
 };
 
